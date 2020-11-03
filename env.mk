@@ -20,7 +20,7 @@ sbindir ?= $(prefix)/sbin
 includedir ?= $(prefix)/include
 
 gnuefi_includedir ?= $(includedir)/efi $(includedir)/efi/$(EFI_ARCH)
-gnuefi_libdir ?= $(libdir)
+gnuefi_libdir ?= /usr/lib
 
 LDFLAGS := --warn-common --no-undefined --fatal-warnings \
 	   $(patsubst $(join -Wl,,)%,%,$(EXTRA_LDFLAGS))

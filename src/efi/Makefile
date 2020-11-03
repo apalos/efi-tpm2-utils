@@ -4,28 +4,31 @@ include $(TOPDIR)/rules.mk
 EFI_ARCH = $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
 
 # XXX: __attribute__((ms_abi)) is only available since gcc 4.7
-CFLAGS += -mno-mmx -mno-sse -maccumulate-outgoing-args \
+CFLAGS += \
 	  -fno-merge-constants -fno-strict-aliasing \
 	  -ffreestanding -fshort-wchar \
 	  -fno-stack-protector -fno-stack-check \
 	  -fpic -fno-builtin -nostdinc \
 	  $(addprefix -I, $(TOPDIR)/src/include $(gnuefi_includedir) \
 	  $(shell $(CC) -print-file-name=include)) \
-	  -DCONFIG_$(EFI_ARCH) -DGNU_EFI_USE_MS_ABI \
+	  -DCONFIG_$(EFI_ARCH) #-DGNU_EFI_USE_MS_ABI \
 	  -DETU_VERSION=L\"$(ETU_VERSION)\"
 
 ifeq ($(EFI_ARCH),x86_64)
     DEFAULT_ARCH = x64
-    CFLAGS += -m64 -mno-red-zone -DDEFAULT_ARCH=\"$(DEFAULT_ARCH)\"
+    CFLAGS += -m64 -mno-red-zone -mno-mmx -maccumulate-outgoing-args -mno-sse -DDEFAULT_ARCH=\"$(DEFAULT_ARCH)\"
 else ifeq ($(EFI_ARCH),ia32)
     DEFAULT_ARCH = ia32
-    CFLAGS += -m32 -DDEFAULT_ARCH=\"$(DEFAULT_ARCH)\"
+    CFLAGS += -m32 -mno-mmx -mno-sse -maccumulate-outgoing-args -DDEFAULT_ARCH=\"$(DEFAULT_ARCH)\"
+else ifeq ($(EFI_ARCH),aarch64)
+    DEFAULT_ARCH = aarch64
+    CFLAGS += -DDEFAULT_ARCH=\"$(DEFAULT_ARCH)\"
 else
     $(error Unsupported EFI_ARCH $(EFI_ARCH) specified)
 endif
 
 LDFLAGS += -nostdlib -shared -Bsymbolic -L$(gnuefi_libdir) \
-	   -T elf_$(EFI_ARCH)_efi.lds $(gnuefi_libdir)/crt0-efi-$(EFI_ARCH).o \
+	   -T $(gnuefi_libdir)/elf_$(EFI_ARCH)_efi.lds $(gnuefi_libdir)/crt0-efi-$(EFI_ARCH).o \
 	   $(EXTRA_LDFLAGS)
 
 LIB_NAME := libefitcg2
